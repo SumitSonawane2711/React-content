@@ -11,7 +11,7 @@ const Bottombar = () => {
                     const isActive = pathname === link.route;
                     return(
             
-                        <Link 
+                      <Link 
                         to={link.route}
                         key={link.label}
                         className={`${isActive && 'bg-primary-900 rounded-[10px]'}
@@ -27,8 +27,7 @@ const Bottombar = () => {
                             <p className='tiny-medium text-light-2'>
                                 {link.label}
                             </p>
-                            {link.label}
-                        </Link>
+                      </Link>
                        
                     )
                 })}

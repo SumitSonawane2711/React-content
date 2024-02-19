@@ -1,5 +1,6 @@
 
-import { account, appwriteConfig, avatars, databases } from "./config";
+import { convertFileToUrl } from "../utils";
+import { account, appwriteConfig, avatars, databases, storage } from "./config";
 import { ID ,Query} from "appwrite";
 
 
@@ -95,3 +96,94 @@ export async function signOutAccount(){
         console.log(error);
     }
 }
+
+export async function createPost(post){
+
+    try {
+        //upload img to storage
+        const uploadedFile = await uploadFile(post.file[0])
+
+        if(!uploadedFile) throw Error;
+        const fileId = uploadedFile.$id;
+
+        //get file url
+        const fileUrl = await getFilePreview(fileId)
+       // const fileUrl = convertFileToUrl(getFilePreview(fileId))
+
+        if(!fileUrl) {
+            deleteFile(fileId)
+            throw Error;}
+            
+        //convert tags inyo an array
+        const tags = post.tags?.replace(/ /g,'').split(',') || [];
+        
+        //save post to database
+        const newPost = await databases.createDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.postCollectionId,
+            ID.unique(),
+            {
+                creator:post.userId,
+                caption:post.caption,
+                imageId:fileId,
+                location:post.location,
+                tags:tags,
+                imageUrl: fileUrl,
+            }
+        )
+
+        if(!newPost){
+            await deleteFile(uploadedFile.$id)
+            throw Error;
+        }
+        return newPost;
+    } catch (error) {
+        console.log("post not created",error);
+    }
+}
+
+export async function uploadFile(file){
+    try {
+        const uploadedFile = await storage.createFile(
+            appwriteConfig.storageId,
+            ID.unique(),
+            file
+        );
+        return uploadedFile;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export async function getFilePreview(fileId){
+    
+   try {
+    const fileUrl = storage.getFilePreview (
+        appwriteConfig.storageId,
+        fileId,
+        2000,
+        2000,
+        "top",
+        100
+    ) 
+    if (!fileUrl) {throw Error}
+    else{return fileUrl;}
+    
+   } catch (error) {
+    console.log(error);
+   }
+}
+
+export async function deleteFile(fileId){
+    try {
+        await storage.deleteFile(
+            appwriteConfig.storageId,
+            fileId
+        )
+
+        return {status:'ok'}
+    } catch (error) {
+        console.log(error);
+    }
+}
+

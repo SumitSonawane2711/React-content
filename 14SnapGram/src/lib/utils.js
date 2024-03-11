@@ -5,6 +5,29 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
+export function formatDate(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+
+  const timeDifference = now - date;
+  const seconds = Math.floor(timeDifference / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 1) {
+      return `${days} days ago`;
+  } else if (hours > 1) {
+      return `${hours} hours ago`;
+  } else if (minutes > 1) {
+      return `${minutes} minutes ago`;
+  } else {
+      return 'just now';
+  }
+}
+
+
+
 export const convertFileToUrl = (file) => URL.createObjectURL(file);
 
 export function formatDateString(dateString) {

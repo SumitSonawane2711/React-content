@@ -18,7 +18,8 @@ import { createUserAccount,
          updatePost, 
          deletePost, 
          getInfinitePosts, 
-         searchPosts 
+         searchPosts, 
+         getInfiniteUsers
        } from '../appwrite/api'
 import { QUERY_KEYS } from './queryKeys'
 
@@ -193,4 +194,20 @@ export const useSearchPosts = (searchTerm) => {
         queryFn: ()=> searchPosts(searchTerm),
         enabled:!!searchTerm,
     })
+}
+
+export const useGetUsers = () => {
+    return useInfiniteQuery({
+        queryKey: [QUERY_KEYS.GET_INFINITE_POSTS],
+        queryFn : getInfiniteUsers,
+        getNextPageParam : (lastPage) => {
+            if(lastPage && lastPage.documents.length == 0){
+                return null;
+            }
+
+            const lastId = lastPage.documents[lastPage.documents.length-1].$id;
+            return lastId;
+        },
+
+    });
 }

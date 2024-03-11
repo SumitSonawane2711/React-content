@@ -379,3 +379,24 @@ export async function searchPosts({searchTerm}){
         console.log(error);
     }
 }
+
+export async function getInfiniteUsers({pageParam}){
+    const queries = [Query.limit(20)];
+
+    if(pageParam){
+        queries.push(Query.cursorAfter(pageParam.toString()))
+    }
+    try {
+        const users = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.postCollectionId,
+            queries,
+        )
+
+        if(!users) throw Error;
+
+        return users;
+    } catch (error) {
+        console.log(error);
+    }
+}

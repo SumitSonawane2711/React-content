@@ -7,18 +7,6 @@ import { useGetPosts, useSearchPosts } from '@/lib/react-query/queriesAndMutatio
 import React, { useEffect, useState } from 'react'
 import {useInView} from 'react-intersection-observer';
 
-// const SearchResults = ({ isSearchFetching, searchedPosts }) => {
-//   if (isSearchFetching) {
-//     return <Loader />;
-//   } else if (searchedPosts && searchedPosts.documents.length > 0) {
-//     return <GridPostList posts={searchedPosts.documents} />;
-//   } else {
-//     return (
-//       <p className="text-light-4 mt-10 text-center w-full">No results found</p>
-//     );
-//   }
-// };
-
 const Explore = () => {
   const {ref,inView } = useInView();
   const {data:posts,fetchNextPage,hasNextPage} = useGetPosts();

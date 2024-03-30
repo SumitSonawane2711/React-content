@@ -1,5 +1,6 @@
 
-import { account, appwriteConfig, avatars, databases, storage } from "./config";
+import { QUERY_KEYS } from "../react-query/queryKeys";
+import { account, appwriteConfig, avatars, client, databases, storage } from "./config";
 import { ID ,Query} from "appwrite";
 
 
@@ -210,14 +211,15 @@ export async function likePost(postId, likesArray){
         )
 
         if(!updatedPost ) throw Error;
-        return updatedPost
+        
+        return updatedPost;
 
     } catch (error) {
         console.log(error);
     }
 }
 
-export async function savePost(postId,userId){
+export async function savePost(userId,postId){
     try {
         const updatedPost = await databases.createDocument(
             appwriteConfig.databaseId,
@@ -230,7 +232,8 @@ export async function savePost(postId,userId){
         )
 
         if(!updatedPost ) throw Error;
-        return updatedPost
+
+        return updatedPost;
         
     } catch (error) {
         console.log(error);
@@ -246,7 +249,7 @@ export async function deleteSavePost(savedRecordId){
         )
 
         if(!statusCode ) throw Error;
-        return {status:'ok'}
+        return {status:'ok'};
         
     } catch (error) {
         console.log(error);
@@ -268,7 +271,7 @@ export async function getPostById(postId){
 }
 
 export async function updatePost(post){
-
+    
     const hasFileToUpdate = post.file.length > 0;
 
     try {
@@ -285,10 +288,10 @@ export async function updatePost(post){
             if(!uploadedFile) throw Error;
             const fileId = uploadedFile.$id;
             //get file url
-            const fileUrl = await getFilePreview(fileId)
+            const fileUrl =  getFilePreview(fileId)
            // const fileUrl = convertFileToUrl(getFilePreview(fileId))
            if(!fileUrl) {
-               deleteFile(fileId)
+               await deleteFile(fileId)
                throw Error;
             }
 
@@ -396,6 +399,189 @@ export async function getInfiniteUsers({pageParam}){
         if(!users) throw Error;
 
         return users;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export async function getUsers(limit){
+
+    const queries = [Query.orderDesc("$createdAt")];
+
+    if(limit){
+        queries.push(Query.limit(limit))
+    }
+    try {
+        const users = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
+            queries,
+        )
+
+        if(!users) throw Error;
+
+        return users;
+        
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export async function getUserById(userId){
+    try {
+        const user = await databases.getDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
+            userId
+        )
+
+        if(!user) throw Error;
+
+        return user;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export async function updateUser(user){
+    console.log("updated user : " ,user);
+
+    const hasFileToUpdate = user.file.length > 0;
+    try {
+
+        let image = {
+            imageUrl: user.imageUrl,
+            imageId :user.imageId,
+
+        }
+
+        if(hasFileToUpdate){
+            const uploadedFile = await uploadFile(user.file[0])
+            if(!uploadedFile) throw Error;
+            const FileId = uploadedFile.$id;
+
+            const fileurl = await getFilePreview(FileId);
+
+            if(!fileurl){
+                await deleteFile(FileId)
+                throw Error;
+            }
+
+            image = { ...image, imageUrl:fileurl, imageId:uploadedFile.$id};
+
+        }
+
+        const updatedProfile = await databases.updateDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
+            user.userId,
+            {
+                name:user.name,
+                bio:user.bio,
+                username:user.username,
+                imageId:image.imageId,
+                imageUrl: image.imageUrl,
+                email:user.email,
+        
+            }
+        )
+
+        if(!updatedProfile){
+            if(hasFileToUpdate){
+                await deleteFile(image.imageId)
+            }
+
+            throw Error;
+        }
+
+        if(user.imageId && hasFileToUpdate){
+            await deleteFile(user.imageId)
+            
+        }
+        
+        return updatedProfile;
+
+    } catch (error) {
+        console.log("Profile not update",error);
+    }
+}
+
+
+//messages 
+
+export async function getMessages(){
+    try {
+        const response = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.messagesCollectionId,
+            [Query.orderDesc('$createdAt'),
+             Query.limit(20)
+            ]
+
+        )
+
+        if(!response) throw Error
+
+        return response
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export async function createMessage(Messages){
+    try {
+        const message = await databases.createDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.messagesCollectionId,
+            ID.unique(),
+            Messages
+        )
+
+        if(!message) throw Error;
+
+        return message;
+
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export async function deleteMessage(MessageId){
+    try {
+        const deletemessage = databases.deleteDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.messagesCollectionId,
+            MessageId,
+        ) 
+
+        if(!deletemessage) throw Error;
+
+        return deletemessage;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export async function subscribe(){
+    try {
+        const realTime = client.subscribe(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.messagesCollectionId}.documents`,response =>{
+            console.log('Real Time',response);
+           
+           if(response.events.includes("databases.*.collections.*.documents.*.create")){
+            console.log("A Message was Created");
+            
+           }
+
+           if(response.events.includes("databases.*.collections.*.documents.*.delete")){
+            console.log("A Message was deleted");
+           }
+
+        })
+
+        if(!realTime) throw Error
+
+        return realTime
+
     } catch (error) {
         console.log(error);
     }

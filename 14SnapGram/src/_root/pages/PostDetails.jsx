@@ -1,20 +1,37 @@
 import { Button } from '@/components/ui/button'
 import PostStats from '@/components/ui/shared/PostStats'
+import { useToast } from '@/components/ui/use-toast'
 import { useUserContext } from '@/context/AuthContext'
-import { useGetPostById } from '@/lib/react-query/queriesAndMutations'
+import { useDeletePost, useGetPostById } from '@/lib/react-query/queriesAndMutations'
 import { formatDate } from '@/lib/utils'
 import { Loader } from 'lucide-react'
 import React from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 const PostDetails = () => {
 
   const {user} = useUserContext()
   const {id} = useParams()
   const{data:post,isPending} = useGetPostById(id || '');
+  const {toast} = useToast()
+  const navigate = useNavigate()
+  const {mutateAsync:deletePost, isPending:isLoadingDelete} = useDeletePost();
 
-  const handleDeletePost =()=>{
+  const handleDeletePost = async()=>{
+       const deletedPost = await deletePost({
+        postId:post.$id,
+        imageId:post.imageId,
+       })
+        
 
+       if(!deletedPost){
+        toast({title:"Please try again"})
+        throw Error
+       } 
+       
+       else {toast({title:"Successfully Deleted"})}
+
+       return navigate(`/profile/${user.id}`);
   }
 
   return (

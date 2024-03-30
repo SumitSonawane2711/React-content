@@ -19,7 +19,14 @@ import { createUserAccount,
          deletePost, 
          getInfinitePosts, 
          searchPosts, 
-         getInfiniteUsers
+         getInfiniteUsers,
+         getUsers,
+         getUserById,
+         updateUser,
+         getMessages,
+         createMessage,
+         deleteMessage,
+         subscribe,
        } from '../appwrite/api'
 import { QUERY_KEYS } from './queryKeys'
 
@@ -67,10 +74,10 @@ export const useLikePost = () =>{
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: ({postId , likeArray}) => likePost(postId,likeArray),
+        mutationFn: ({postId , likesArray}) => likePost(postId,likesArray),
         onSuccess: (data) => {
             queryClient.invalidateQueries({
-                queryKey:[QUERY_KEYS.GET_POST_BY_ID,data?.$id]
+                queryKey:[QUERY_KEYS.GET_POST_BY_ID, data?.$id]
             })
 
             queryClient.invalidateQueries({
@@ -92,7 +99,7 @@ export const useSavePost = () =>{
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: ({postId , userId}) => savePost(postId,userId),
+        mutationFn: (userId,postId) => savePost(userId,postId),
         onSuccess: () => {
 
             queryClient.invalidateQueries({
@@ -114,7 +121,7 @@ export const useDeleteSavedPost = () =>{
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: (savedPostRecordId) => deleteSavePost(savedPostRecordId),
+        mutationFn: (savedRecordId) => deleteSavePost(savedRecordId),
         onSuccess: () => {
 
             queryClient.invalidateQueries({
@@ -210,4 +217,82 @@ export const useGetUsers = () => {
         },
 
     });
+}
+
+export const useGetCreator = (limit) =>{
+    return useQuery({
+        queryKey:[QUERY_KEYS.GET_USERS],
+        queryFn: () => getUsers(limit),
+    })
+}
+
+export const useGetUserById=(userId)=>{
+    return useQuery({
+        queryKey :[QUERY_KEYS.GET_USER_BY_ID,userId],
+        queryFn: () => getUserById(userId),
+        enabled: !!userId,
+    })
+}
+
+export const UseUpdateUser = ()=>{
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn : (user)=>updateUser (user),
+        onSuccess: (data)=>{
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.GET_CURRENT_USER],
+            });
+
+            queryClient.invalidateQueries({
+                queryKey :[QUERY_KEYS.GET_USER_BY_ID,data?.$id]
+            });
+        }
+    })
+}
+
+export const useGetMessages = ()=>{
+    return useQuery({
+        queryKey : [QUERY_KEYS.GET_POSTS],
+        queryFn: () => getMessages()
+    })
+}
+
+export const useCreateMessage = () =>{
+    const queryClient = useQueryClient()
+
+    return useMutation ({
+        mutationFn : (Message) => createMessage(Message),
+        onSuccess : ()=>{
+            queryClient.invalidateQueries({
+                queryKey : [QUERY_KEYS.GET_RECENT_POSTS]
+            })
+        }
+
+    })
+}
+
+export const useDeleteMessage = ()=>{
+    const queryClient = useQueryClient()
+
+     return useMutation({
+        mutationFn : (MessageId) => deleteMessage(MessageId),
+        onSuccess : () => {
+            queryClient.invalidateQueries({
+                queryKey : [QUERY_KEYS.GET_RECENT_POSTS]
+            })
+        }
+     })
+} 
+
+export const useSubscribe = () =>{
+    const queryClient= useQueryClient()
+
+    return useMutation({
+        mutationFn :()=> subscribe(),
+        onSuccess:() => {
+            queryClient.invalidateQueries({
+                queryKey : [QUERY_KEYS.GET_RECENT_POSTS]
+            })
+        }
+    })
 }

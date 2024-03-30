@@ -4,15 +4,15 @@ import { Loader } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 
 const PostStats = ({post,userId}) => {
-
-  const likeList = post.likes.map((user)=>user.$id)
   
-  const [likes,setLikes]= useState(likeList);
+  const likesList = post.likes.map((user)=>user.$id)
+  
+  const [likes,setLikes]= useState(likesList);
   const [isSaved,setIsSaved ]= useState(false)
 
   const {mutate:likePost} = useLikePost()
-  const {mutate:savePost, isPending:isSavingPost} = useSavePost()
-  const {mutate:deleteSavedPost, isPending:isDeletingSaved} = useDeleteSavedPost()
+  const {mutate:savePost} = useSavePost()
+  const {mutate:deleteSavedPost} = useDeleteSavedPost()
   
   const{data :currentUser} = useGetCurrentUser();
 
@@ -25,22 +25,20 @@ const PostStats = ({post,userId}) => {
   //const postId = post.$id;
 
   const handleLikedPost = (e) => {
+    
     e.stopPropagation();
 
-    let newLikes = [...likes];
+    let LikesArray = [...likes];
 
-    const hasLiked = newLikes.includes(userId)
-
-    if(hasLiked){
-      newLikes = newLikes.filter((id) => id!== userId);
+    if(LikesArray.includes(userId)){
+      LikesArray = LikesArray.filter((id) => id!== userId);
     }
     else {
-      newLikes.push(userId)
+      LikesArray.push(userId)
     }
     
-
-    setLikes(newLikes);
-    likePost(post?.$id,newLikes)
+    setLikes(LikesArray);
+    likePost(post?.$id,LikesArray)
   }
 
   const handleSavePost = (e) => {
@@ -48,13 +46,11 @@ const PostStats = ({post,userId}) => {
 
 
     if(savedPostRecord){
-      setIsSaved(false)
-      deleteSavedPost(savedPostRecord.$id)
-
-      return;
+      setIsSaved(false);
+      return deleteSavedPost(savedPostRecord.$id)
     }
-
-    savePost(userId,post.$id)
+    
+    savePost(post?.$id,userId)
     setIsSaved(true)
   }
 
@@ -75,17 +71,14 @@ const PostStats = ({post,userId}) => {
         </div>
 
         <div className='flex gap-2 '>
-        {isSavingPost || isDeletingSaved ? <Loader/>
-             :<img src={isSaved 
-                      ? "/assets/icons/saved.svg"
-                      : "/assets/icons/save.svg" 
-                     }
-                 alt="like"
+        
+             <img src={isSaved ? "/assets/icons/saved.svg": "/assets/icons/save.svg" }
+                 alt="share"
                  width={20}
                  height={20}
                  onClick={(e) => handleSavePost(e)}
                  className='cursor-pointer'
-            />}
+            />
         </div>
     </div>
   )

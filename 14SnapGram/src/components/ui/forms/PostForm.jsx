@@ -28,7 +28,7 @@ const PostForm = ({post,action}) => {
     defaultValues: {
       caption: post ? post?.caption :"",
       file:[],
-      location:post ? post?.location :"",
+      location:post ? post?.location :"", 
       tags:post? post?.tags : "",
     },
   })
@@ -63,6 +63,7 @@ const PostForm = ({post,action}) => {
    navigate('/');
   }
   return (
+    
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} 
             className="flex flex-col gap-9 w-full max-w-5xl">
@@ -131,6 +132,7 @@ const PostForm = ({post,action}) => {
         />
         <div className='flex gap-4 items-center justify-end'>
            <Button 
+             onClick = {()=>navigate(-1)} 
              type="button"
              className='shad-button_dark_4'
             >Cancel

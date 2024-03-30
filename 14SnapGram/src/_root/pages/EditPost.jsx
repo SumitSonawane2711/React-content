@@ -17,7 +17,7 @@ const EditPost = () => {
           <img 
             src="/assets/icons/add-post.svg" 
             alt="add"
-            width={36}
+            width={56}
             height={36}
           /> 
           <h2 className='h3-bold mid:h2-bold text-left w-full'>Edit Post</h2>

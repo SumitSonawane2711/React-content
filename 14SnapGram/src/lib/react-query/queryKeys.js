@@ -18,4 +18,6 @@ export const QUERY_KEYS = {
 
   //  SEARCH KEYS
   SEARCH_POSTS : "getSearchPosts",
+
+  // MESSAGES KEYS
 }

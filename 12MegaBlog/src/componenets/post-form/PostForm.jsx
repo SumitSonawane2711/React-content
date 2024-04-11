@@ -23,7 +23,7 @@ export default function PostForm({ post }) {
             const file = data.image[0] ? await service.uploadFile(data.image[0]) : null;
 
             if (file) {
-                service.deleteFile(post.featuredImage);
+                service.deleteFile(post.featuredimage);
             }
 
             const dbPost = await service.updatePost(post.$id, {
@@ -40,7 +40,7 @@ export default function PostForm({ post }) {
 
             if (file) {
                 const fileId = file.$id;
-                data.featuredImage = fileId;
+                data.featuredimage = fileId;
                 const dbPost = await service.createPost({ ...data, userId: userData.$id });
 
                 if (dbPost) {
@@ -103,7 +103,7 @@ export default function PostForm({ post }) {
                 {post && (
                     <div className="w-full mb-4">
                         <img
-                            src={service.getFilePreview(post.featuredImage)}
+                            src={service.getFilePreview(post.featuredimage)}
                             alt={post.title}
                             className="rounded-lg"
                         />

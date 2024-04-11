@@ -15,8 +15,8 @@ const PostDetails = () => {
   const{data:post,isPending} = useGetPostById(id || '');
   const {toast} = useToast()
   const navigate = useNavigate()
-  const {mutateAsync:deletePost, isPending:isLoadingDelete} = useDeletePost();
-
+  const {mutateAsync:deletePost, isPending:isLoadingDelete,isSuccess} = useDeletePost();
+  
   const handleDeletePost = async()=>{
        const deletedPost = await deletePost({
         postId:post.$id,
@@ -28,10 +28,9 @@ const PostDetails = () => {
         toast({title:"Please try again"})
         throw Error
        } 
-       
        else {toast({title:"Successfully Deleted"})}
-
-       return navigate(`/profile/${user.id}`);
+        
+        return navigate(`/profile/${user.$id}`)
   }
 
   return (
@@ -81,7 +80,9 @@ const PostDetails = () => {
                        onClick={handleDeletePost}
                        variant="ghost"
                        className={`ghodt_details-delete_btn ${user.id !== post?.creator.$id && 'hidden'}`}
-                  >
+                  > {
+                    isLoadingDelete && <Loader/>
+                  }
                     <img 
                        src="/assets/icons/delete.svg" 
                        alt="delete"

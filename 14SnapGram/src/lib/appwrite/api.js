@@ -1,7 +1,8 @@
 
+import { useCallback } from "react";
 import { QUERY_KEYS } from "../react-query/queryKeys";
 import { account, appwriteConfig, avatars, client, databases, storage } from "./config";
-import { ID ,Query} from "appwrite";
+import { ID ,Permission,Query, Role} from "appwrite";
 
 
 
@@ -444,7 +445,7 @@ export async function getUserById(userId){
 }
 
 export async function updateUser(user){
-    console.log("updated user : " ,user);
+    //console.log("updated user : " ,user);
 
     const hasFileToUpdate = user.file.length > 0;
     try {
@@ -529,22 +530,27 @@ export async function getMessages(){
 }
 
 export async function createMessage(Messages){
+
     try {
         const message = await databases.createDocument(
             appwriteConfig.databaseId,
             appwriteConfig.messagesCollectionId,
             ID.unique(),
-            Messages
+            Messages,
+            
+            
         )
-
+        
         if(!message) throw Error;
-
+        
         return message;
+        
 
     } catch (error) {
         console.log(error);
     }
 }
+
 
 export async function deleteMessage(MessageId){
     try {
@@ -562,27 +568,20 @@ export async function deleteMessage(MessageId){
     }
 }
 
-export async function subscribe(){
-    try {
-        const realTime = client.subscribe(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.messagesCollectionId}.documents`,response =>{
-            console.log('Real Time',response);
-           
-           if(response.events.includes("databases.*.collections.*.documents.*.create")){
-            console.log("A Message was Created");
-            
-           }
+// export async function subScribe(callback){
 
-           if(response.events.includes("databases.*.collections.*.documents.*.delete")){
-            console.log("A Message was deleted");
-           }
+//     try {
+//           const unsubscribe= client.subscribe(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.messagesCollectionId}.documents`,response =>{
+//            callback(response);
+//          })
 
-        })
-
-        if(!realTime) throw Error
-
-        return realTime
-
-    } catch (error) {
-        console.log(error);
-    }
-}
+//         return ()=>{ unsubscribe.close;}
+//        } 
+        
+      
+//     catch (error) {
+        
+//         console.log(error);
+//         throw error;
+//     }
+// }

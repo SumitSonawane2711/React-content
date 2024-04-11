@@ -1,56 +1,74 @@
 import Loader from '@/components/ui/shared/Loader';
 import { useToast } from '@/components/ui/use-toast';
 import { useUserContext } from '@/context/AuthContext';
-import { useCreateMessage, useDeleteMessage, useGetCreator, useGetMessages, useSubscribe } from '@/lib/react-query/queriesAndMutations';
+//import { permission } from '@/lib/appwrite/api';
+import { appwriteConfig, client } from '@/lib/appwrite/config';
+
+import { useCreateMessage, useDeleteMessage, useGetCreator, useGetMessages, useGetUserById } from '@/lib/react-query/queriesAndMutations';
 import React, { useEffect, useState } from 'react'
 import {Trash2} from 'react-feather'
+import { useLocation, useParams } from 'react-router-dom';
 
 const ChatRoom = () => {
-
+    
+    const {id} = useParams()
+    const {user} = useUserContext()
     const {toast} = useToast();
-    const {user} = useUserContext();
     const [messages, setMessages] = useState([])
     const [messageBody, setMessageBody] = useState('')
+    //const{mutateAsync:subscribe} = useSubscribe();
+
+    const {data,isLoading,isError} = useGetMessages()
+    const {mutateAsync:payload} = useCreateMessage()
+    const {mutateAsync:MessageId} = useDeleteMessage()
+    const{data:creator,isLoading:isLoadingGetuser,isError:isErrorGetuser} = useGetUserById(id)
     
-    const{mutateAsync:subScribe} = useSubscribe()
-    const {
-      data:creators,
-      isLoading:isUserLoading,
-      isError:isErrorCreators
-    } = useGetCreator(10);
-
     useEffect(()=>{
-      getMessages()
 
-      subScribe();
-      
-    },
-    [])
-
+      getMessages() 
   
+      const unsubscribe =  client.subscribe(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.messagesCollectionId}.documents`, function (response) {
+        //callback will be executed on changes for documents 
+        if(response.events.includes( "databases.*.collections.*.documents.*.create")){
+         // console.log('A message is created');
+        setMessages((prevMessages) => [response.payload, ...prevMessages]);
+        }
+        if(response.events.includes( "databases.*.collections.*.documents.*.delete")){
+         // console.log('A message was deleted');
+      setMessages(() => messages.filter((message) => message.$id !== response.payload.$id));
+        }
+        }
+    )
+    return (()=> {
+      unsubscribe()
+    })
 
-  const {data,isLoading,isError} = useGetMessages()
-  const {mutateAsync:payload} = useCreateMessage()
-  const {mutateAsync:MessageId} = useDeleteMessage()
+    },[creator]) 
   
   if(isError){
     toast({title:"something went wrong."});
   }
 
   const getMessages = async() =>{
-    const response = data;
-    console.log( data.documents);
+     const response =  data;
+    if (!response) {
+      console.log("something get wrong to get message response...");
+    }
+    //console.log( "response : ",data.documents);
     setMessages(response.documents)
   }
-
+  
+  
   const handleSubmit = async (e)=>{
     e.preventDefault()
 
-    const response = await payload ({body:messageBody})
+   
 
-    console.log("created",response);
+    const response = await payload ({body:messageBody,
+                                     user_id:user.id,
+                                     username:user.name})
 
-    setMessages(prevState => [response, ...messages])
+
     setMessageBody('')
   }
 
@@ -63,25 +81,32 @@ const ChatRoom = () => {
       });
      }
 
-     setMessages(prevState=> messages.filter(message => message.$id !== message_id))
   }
   return (
 
-    <main className=' container'>
+    <main className='container '>
       <div className='flex w-full flex-row'>
     <div className='min-w-80 w-full '>
-          <div  className='flex gap-4 mt-8 ml-7 bg-red'>
-              <img src={user.imageUrl || "/assets/icons/profile-placeholder.svg"} 
-                  alt="creator"
-                  className=' rounded-full w-14 h-14' />
-              <div className='flex flex-col'>
-                <p className='body-bold'>
-                    {user.name}
-                </p>
-                <p className='small-regular text-light-3'>
-                    @{user.username}
-                </p>
-              </div>
+          <div  className='flex gap-4 mt-8 ml-7'>
+
+              {isLoadingGetuser ? <Loader/> : (
+              <>
+                <img src={creator.imageUrl || "/assets/icons/profile-placeholder.svg"}
+                       alt="creator"
+                       className=' rounded-full w-14 h-14' />
+                  
+                <div className='flex flex-col'>
+
+                    <p className='body-bold'>
+                       {creator.name}
+                    </p>
+                    <p className='small-regular text-light-3'>
+                       @{creator.username}
+                    </p>
+
+                </div>
+              </>)}
+              
           </div>
 
           
@@ -99,7 +124,8 @@ const ChatRoom = () => {
                maxLength="1000"
                placeholder='Say something...'
                onChange={(e)=>{setMessageBody(e.target.value)}}
-               value={messageBody}></textarea>
+               value={messageBody}>
+            </textarea>
           </div>
 
           <div className='send-btn--wrapper'>
@@ -107,22 +133,38 @@ const ChatRoom = () => {
           </div>
         </form>
         <div>
-            {messages.map(message => (
-                <div key={message.$id} className='message--wrapper'>
+            {messages.map(message => {
+      
+                if(creator?.$id == message.user_id || message.user_id === user.id){
+                  return (
+              <div key={message.$id} className='message--wrapper'>
 
-                    <div className='message--header'>
-                       <small className = "message-timestamp">{(new Date(message.$createdAt).toLocaleString())}</small> 
-                       
-                       <Trash2
-                         className='delete--btn'
-                         onClick={()=>{deleteMessage(message.$id)}}/>
-                    </div>
+                <div className='message--header'>
+                 <p>
+                    {message ?.username ? (
+                     <span>{message?.username}</span>
+                     ):(
+                     <span>Anonymous user</span>
+                     )
+                    }
 
-                    <div className='message--body'>
-                        <span>{isLoading ? <Loader/>:message.body}</span>
-                    </div>
-                </div>
-            ))}
+                   <small className = "message-timestamp">{(new Date(message.$createdAt).toLocaleString())}</small> 
+                 </p>
+   
+                 {(
+                     <Trash2
+                     className='delete--btn'
+                     onClick={()=>{deleteMessage(message.$id)}}/>
+                 )}
+               
+               </div>
+
+                 <div className={'message--body' + (message.user_id === user.$id ? 'message--body--owner' : '')}>
+                   <span>{isLoading ? <Loader/>:message.body}</span>
+                 </div>
+              </div>)
+              }
+            })}
         </div>
       </div>    
     </main>

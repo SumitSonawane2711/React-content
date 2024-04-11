@@ -26,7 +26,6 @@ import { createUserAccount,
          getMessages,
          createMessage,
          deleteMessage,
-         subscribe,
        } from '../appwrite/api'
 import { QUERY_KEYS } from './queryKeys'
 
@@ -271,6 +270,7 @@ export const useCreateMessage = () =>{
     })
 }
 
+
 export const useDeleteMessage = ()=>{
     const queryClient = useQueryClient()
 
@@ -280,19 +280,19 @@ export const useDeleteMessage = ()=>{
             queryClient.invalidateQueries({
                 queryKey : [QUERY_KEYS.GET_RECENT_POSTS]
             })
+            
         }
      })
 } 
 
-export const useSubscribe = () =>{
-    const queryClient= useQueryClient()
+// export const useSubscribe = () =>{
+//     const queryClient= useQueryClient()
 
-    return useMutation({
-        mutationFn :()=> subscribe(),
-        onSuccess:() => {
-            queryClient.invalidateQueries({
-                queryKey : [QUERY_KEYS.GET_RECENT_POSTS]
-            })
-        }
-    })
-}
+//     return useMutation({
+//         mutationFn:(response) =>{ const unsub =  subScribe(response)
+            
+//         } ,
+       
+//     })
+
+// }

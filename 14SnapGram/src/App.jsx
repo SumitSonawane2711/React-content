@@ -37,7 +37,7 @@ const  App = ()=> {
           <Route path='/LikedPosts/:id' element={<LikedPosts/>} /> 
           <Route path='/update-profile/:id' element={<UpdateProfile/>} />
           <Route path='/chat' element={<Chat/>}>
-              <Route index element={<ChatRoom/>} />
+              <Route path='/chat/:id' element={<ChatRoom/>} />
           </Route>
         </Route>
       </Routes>

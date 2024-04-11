@@ -32,7 +32,7 @@ const UpdateProfile = () => {
     },
   })
 
-  const { mutateAsync: updateUser, isLoading: isLoadingUpdate} = UseUpdateUser()
+  const { mutateAsync: updateUser, isLoading: isLoadingUpdate,isError} = UseUpdateUser()
 
   if(!currentUser){
     return (
@@ -44,7 +44,7 @@ const UpdateProfile = () => {
 
   const handleUpdate = async(value) => {
      const updatedUser = await updateUser({
-      userId: currentUser.$id,
+      userId: user.$id,
       name: value.name,
       bio: value.bio,
       file: value.file,
